@@ -7,10 +7,13 @@
  makeNewCheck: .asciiz "\nWrite the number where you want to put your sign: "
  currentState: .asciiz "\nCurrent game state:\n"
  computerWin: .asciiz "\nComputer won this round!\n"
- playerWin: .asciiz "\nYou won this round!\n"
+ playerWin: .asciiz "\n\nYou won this round!\n"
  creatingNewArray: .asciiz "\n Loading new array...........\n"
  array: .space 36
  resultArray: .space 20
+ resultsPlayer: .asciiz "\nGames won by Player: "
+ resultsComputer: .asciiz "\nGames won by Computer: "
+ endOfRound: .asciiz "\nThe round has ended! If no one won then this game is a tie.\n"
  
  .text
  # $s0 - number of rounds to play
@@ -19,8 +22,12 @@
  # $s3 - sign '-' 
  # $s4 - players checksum
  # $s5 - computer checksum
+ # $s6 - won by player
+ # $s7 - won by computer
 
   li $s3, 45
+  li $s6, 0
+  li $s7, 0
 
   
  
@@ -50,7 +57,7 @@
  la $s0, ($v0)
  ble $s0, 48, wrongNumber
  bge $s0, 54, wrongNumber
- 
+ addi $s0, $s0, -48
  
  
  
@@ -114,6 +121,8 @@
  
  loop:
  usersInput:
+ # showing that player is making the move
+  la $t1, ($s1)
  #prompt to make move
   la $a0, makeNewCheck
   li $v0, 4
@@ -136,21 +145,25 @@
   
   #when checkin succeeded
   userCheckEnd:
- 
- 
- 
 
- 
 
- #adding 1 to all space used
- addi $t2, $t2, 1
+ #ending the move (putting the sign in place and checking for the win)
  jal loopExec
+ 
+ #computers turn:
  computerInput:
+ #if $t2 = 9 then jump to the end
+ beq $t2, 9, end
+ # showing that computer is making the move
+ la  $t1, ($s2)
+ #jumping to computer strategy
+ j computerInputCheck
+ #TODO
+
  
  
  
- 
- 
+ computerCheckEnd:
  jal loopExec
  
  
@@ -161,12 +174,35 @@
  #beqz $s0, init
  bne $t2, 9, loop
  addi $s0, $s0, -1
+ #printing end of round prompt
+ la $a0, endOfRound
+ li $v0, 4
+ syscall
  bnez $s0, init
+ #printing Player results
+  la $a0, resultsPlayer
+ li $v0, 4
+ syscall
+ la $a0, ($s6)
+ li $v0, 1
+ syscall
+ #printing Computer results
+ la $a0, resultsComputer
+ li $v0, 4
+ syscall
+ la $a0, ($s7)
+ li $v0, 1
+ syscall
+ #program ends
  li $v0, 10
  syscall
  
  
- #funkcje sprawdzaj¹ce czy mo¿na wpisac znak
+ 
+ 
+ 
+ 
+ #funkcje sprawdzaj¹ce czy mo¿na wpisac znak (funkcje gracza)
  playerInput49:
  addi $t0, $zero, 0
  lb $t7, array($t0)
@@ -223,14 +259,63 @@
  
  
  
+ #computer functions
+ computerInputCheck:
+ 
+  computerInput53:
+ addi $t0, $zero, 16
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+ computerInput49:
+ addi $t0, $zero, 0
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+   computerInput57:
+ addi $t0, $zero, 32
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+
+  computerInput50:
+ addi $t0, $zero, 4
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+   computerInput51:
+ addi $t0, $zero, 8
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+    computerInput55:
+ addi $t0, $zero, 24
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+    computerInput56:
+ addi $t0, $zero, 28
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+     computerInput52:
+ addi $t0, $zero, 12
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+     computerInput54:
+ addi $t0, $zero, 20
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ j end
+ 
  
  loopExec:
  signing:
+ #putting corrent players sign on the board
+ sb $t1, array($t0)
+  #adding 1 to all space used
+ addi $t2, $t2, 1
  
- 
- 
- 
- jr $ra
  winChecking:
  #started checking with middle box
  #checking fields 1, 5, 9 (diagonal 1)
@@ -352,8 +437,6 @@
  
  
  
- #TODO ?
- 
  
  
  statePrinting:
@@ -431,33 +514,24 @@
  addi $t0, $t0, -32
  
  
- 
- #TEST used to NOT loop !!
- li $t2, 9
- #
- 
- 
  jr $ra
  
+
  
  
  
  
- standardCheck:
-  #standard check
- add $t6, $t3, $t4
- add $t6, $t6, $t5
- beq $t6, $s4, playerWon
- beq $t6, $s5, computerWon
- jr $ra
  
  
- 
+ #possible endings
  
  playerWon:
  la $a0, playerWin
  li $v0, 4
  syscall
+ # adds 1 to players wins
+ addi $s6, $s6, 1
+ # prevents current round from continuing
  li $t2, 9
  jal statePrinting
  j end
@@ -466,12 +540,22 @@
   la $a0, computerWin
  li $v0, 4
  syscall
+  # adds 1 to computer wins
+ addi $s7, $s7, 1
+ # prevents current round from continuing
  li $t2, 9
  jal statePrinting
  j end
  
  
  
+ 
+ 
+ 
+ 
+ 
+ 
+ #possible errors
  
  wrongNumber:
  la $a0, errorNumber
@@ -606,3 +690,24 @@
   sb $s1, array($t0)
   addi $t0, $zero, 0
  #
+
+ #TEST used to NOT loop !!
+ li $t2, 9
+ #
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ standardCheck:
+  #standard check
+ add $t6, $t3, $t4
+ add $t6, $t6, $t5
+ beq $t6, $s4, playerWon
+ beq $t6, $s5, computerWon
+ jr $ra
+ 
+ 
+ 

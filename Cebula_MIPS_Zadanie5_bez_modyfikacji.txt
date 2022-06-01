@@ -152,13 +152,18 @@
  
  #computers turn:
  computerInput:
- 
- #TODO
+ #if $t2 = 9 then jump to the end
+ beq $t2, 9, end
+ # showing that computer is making the move
  la  $t1, ($s2)
+ #jumping to computer strategy
+ j computerInputCheck
+ #TODO
+
  
  
  
- 
+ computerCheckEnd:
  jal loopExec
  
  
@@ -197,7 +202,7 @@
  
  
  
- #funkcje sprawdzaj¹ce czy mo¿na wpisac znak
+ #funkcje sprawdzaj¹ce czy mo¿na wpisac znak (funkcje gracza)
  playerInput49:
  addi $t0, $zero, 0
  lb $t7, array($t0)
@@ -253,6 +258,55 @@
  j userCheckEnd
  
  
+ 
+ #computer functions
+ computerInputCheck:
+ 
+  computerInput53:
+ addi $t0, $zero, 16
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+ computerInput49:
+ addi $t0, $zero, 0
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+   computerInput57:
+ addi $t0, $zero, 32
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+
+  computerInput50:
+ addi $t0, $zero, 4
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+   computerInput51:
+ addi $t0, $zero, 8
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+    computerInput55:
+ addi $t0, $zero, 24
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+    computerInput56:
+ addi $t0, $zero, 28
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+     computerInput52:
+ addi $t0, $zero, 12
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ 
+     computerInput54:
+ addi $t0, $zero, 20
+ lb $t7, array($t0)
+ beq $t7, 45, computerCheckEnd
+ j end
  
  
  loopExec:
